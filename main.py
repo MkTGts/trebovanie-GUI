@@ -33,13 +33,14 @@ class PDFFunctional:
     def write_docx(self) -> None:  
         # иницилизация документа ворд
         doc = DocxTemplate(self.types_pay[self.context["pay"]])
+        print("\n\n", self.types_pay[self.context["pay"]], "\n\n")
         doc.render(self.context)
         doc.save('end.docx')
 
 
     # форматирует в пдф
     def convert_to_pdf(self) -> None:
-        convert("end.docx", f"1.pdf")
+        convert("end.docx", "1.pdf")
         remove("end.docx")
         logging.info("Сконвертировано в пдф Ok.")
 
