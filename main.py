@@ -4,6 +4,10 @@ import tkinter
 from tkinter import ttk
 from types import FunctionType
 from datetime import datetime
+from docxtpl import DocxTemplate
+from docx2pdf import convert
+from os import remove
+from pypdf import PdfWriter
 
 
 logger = logging.getLogger(__name__)
@@ -17,9 +21,60 @@ logging.basicConfig(
 )
 
 
+
+class PDFFunctional:
+    def __init__(self, context: dict):
+        self.context = context
+        self.types_pay = {
+                    "Предоплата": "startPred.docx",
+                    "По факту": "startFact.docx" 
+                 }
+
+    def write_docx(self) -> None:  
+        # иницилизация документа ворд
+        doc = DocxTemplate(self.types_pay[self.context["pay"]])
+        doc.render(self.context)
+        doc.save('end.docx')
+
+
+    # форматирует в пдф
+    def convert_to_pdf(self) -> None:
+        convert("end.docx", f"1.pdf")
+        remove("end.docx")
+        logging.info("Сконвертировано в пдф Ok.")
+
+
+    # склеевает пдфы
+    def mrg(self):
+        merger = PdfWriter()
+
+        merger.append("1.pdf")
+        merger.append(self.types_pay[self.context["payment"]])
+
+        res_file_name = f'{self.types_pay[self.context["filename"]]}.pdf'  # имя конечного склееного файла
+        merger.write(res_file_name)
+        merger.close()
+        logging.info("Пдфы склеены Ok.")
+
+
+    # удаляет промежуточные пдф файлы
+    def input_files_delitter(self):
+        remove("1.pdf")
+        remove(self.types_pay[self.context["payment"]])
+
+
+    def __call__(self, *args, **kwds):
+        self.write_docx()
+        self.convert_to_pdf()
+        self.mrg()
+        self.input_files_delitter()
+    
+
+
+
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.0.2"
+    ver = "0.0.3"
     
     def __init__(self):
         self.root = tkinter.Tk()  # инициализация окна
@@ -38,7 +93,12 @@ class Trebovanie:
 
     
     def create_treb(self):
-        pass
+        make_result_pdf_file = PDFFunctional(context=self.get_response_datas())
+        try:
+            make_result_pdf_file()
+            self.refresh_files()
+        except Exception as err:
+            print(f"Ошибка {err}")
 
 
     def choos_org(self):
@@ -88,8 +148,8 @@ class Trebovanie:
         self.frame_pay_day = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label0 = ttk.Label(self.frame_pay_day, text="День оплаты")
         name_label0.pack(anchor="nw")
-        name_entry0 = ttk.Entry(self.frame_pay_day)
-        name_entry0.pack(anchor="nw")
+        self.pay_day = ttk.Entry(self.frame_pay_day)
+        self.pay_day.pack(anchor="nw")
         self.frame_pay_day.place(x=20, y=40)
 
     
@@ -97,8 +157,8 @@ class Trebovanie:
         self.frame_pay_month = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label1 = ttk.Label(self.frame_pay_month, text="Номер месяца оплаты")
         name_label1.pack(anchor="nw")
-        name_entry1 = ttk.Entry(self.frame_pay_month)
-        name_entry1.pack(anchor="nw")
+        self.pay_month = ttk.Entry(self.frame_pay_month)
+        self.pay_month.pack(anchor="nw")
         self.frame_pay_month.place(x=20, y=105)
 
     
@@ -106,8 +166,8 @@ class Trebovanie:
         self.frame_pay_sum = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label2 = ttk.Label(self.frame_pay_sum, text="Сумма")
         name_label2.pack(anchor="nw")
-        name_entry2 = ttk.Entry(self.frame_pay_sum)
-        name_entry2.pack(anchor="nw")
+        self.pay_sum = ttk.Entry(self.frame_pay_sum)
+        self.pay_sum.pack(anchor="nw")
         self.frame_pay_sum.place(x=20, y=170)
 
 
@@ -115,8 +175,8 @@ class Trebovanie:
         self.frame_pay_addres = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label3 = ttk.Label(self.frame_pay_addres, text="Кому платим")
         name_label3.pack(anchor="nw")
-        name_entry3 = ttk.Entry(self.frame_pay_addres)
-        name_entry3.pack(anchor="nw")
+        self.pay_addres = ttk.Entry(self.frame_pay_addres)
+        self.pay_addres.pack(anchor="nw")
         self.frame_pay_addres.place(x=20, y=235)
 
 
@@ -124,8 +184,8 @@ class Trebovanie:
         self.frame_pay_info = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label4 = ttk.Label(self.frame_pay_info, text="Информация по платежу")
         name_label4.pack(anchor="nw")
-        name_entry4 = ttk.Entry(self.frame_pay_info)
-        name_entry4.pack(anchor="nw")
+        self.pay_info = ttk.Entry(self.frame_pay_info)
+        self.pay_info.pack(anchor="nw")
         self.frame_pay_info.place(x=20, y=300)
 
     
@@ -133,8 +193,8 @@ class Trebovanie:
         self.frame_pay_comment = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label5 = ttk.Label(self.frame_pay_comment, text="Комментарий")
         name_label5.pack(anchor="nw")
-        name_entry5 = ttk.Entry(self.frame_pay_comment)
-        name_entry5.pack(anchor="nw")
+        self.pay_comment = ttk.Entry(self.frame_pay_comment)
+        self.pay_comment.pack(anchor="nw")
         self.frame_pay_comment.place(x=20, y=365)
 
     
@@ -142,8 +202,8 @@ class Trebovanie:
         self.frame_pay_chet = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label6 = ttk.Label(self.frame_pay_chet, text="Номер счета")
         name_label6.pack(anchor="nw")
-        name_entry6 = ttk.Entry(self.frame_pay_chet)
-        name_entry6.pack(anchor="nw")
+        self.pay_chet = ttk.Entry(self.frame_pay_chet)
+        self.pay_chet.pack(anchor="nw")
         self.frame_pay_chet.place(x=20, y=430)
         
     
@@ -151,8 +211,8 @@ class Trebovanie:
         self.frame_pay_date = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label7 = ttk.Label(self.frame_pay_date, text="Дата счета")
         name_label7.pack(anchor="nw")
-        name_entry7 = ttk.Entry(self.frame_pay_date)
-        name_entry7.pack(anchor="nw")
+        self.pay_date = ttk.Entry(self.frame_pay_date)
+        self.pay_date.pack(anchor="nw")
         self.frame_pay_date.place(x=240, y=365)
 
     
@@ -160,8 +220,8 @@ class Trebovanie:
         self.frame_pay_filename = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
         name_label8 = ttk.Label(self.frame_pay_filename, text="Название для конечного файла")
         name_label8.pack(anchor="nw")
-        name_entry8 = ttk.Entry(self.frame_pay_filename)
-        name_entry8.pack(anchor="nw")
+        self.pay_filename = ttk.Entry(self.frame_pay_filename)
+        self.pay_filename.pack(anchor="nw")
         self.frame_pay_filename.place(x=240, y=430)
 
     
@@ -188,12 +248,30 @@ class Trebovanie:
         self.button(text="Обновить список фалов", command=self.refresh_files, x=170, y=5)
 
 
+    def get_response_datas(self):
+        return {
+            "payment": self.combobox.get(),  # файл
+            "pay": self.type_treb.get(),  # типа требования
+            "organization": self.org.get(),  # организация
+            "day": self.pay_day.get(),
+            "month": self.pay_month.get(),
+            "sum": self.pay_sum.get(),
+            "contr_ag": self.pay_addres.get(),
+            "info": self.pay_info.get(),
+            "comment": self.pay_comment.get(),
+            "num": self.pay_chet.get(),
+            "date_num": self.pay_date.get(),
+            "filename": self.pay_filename.get(),
+            "date_res": datetime.strftime(datetime.now(), "%d.%m.%Y")
+        }
+
 
     def __call__(self, *args, **kwds):
         self._all_chooses()
         self._all_frames()
         self._all_buttons()
         self.root.mainloop()
+
 
 
 
