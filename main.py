@@ -32,52 +32,67 @@ class PDFFunctional:
 
     def write_docx(self) -> None:  
         # иницилизация документа ворд
-        doc = DocxTemplate(self.types_pay[self.context["pay"]])
-        print("\n\n", self.types_pay[self.context["pay"]], "\n\n")
-        doc.render(self.context)
-        doc.save('end.docx')
+        try:
+            doc = DocxTemplate(self.types_pay[self.context["pay"]])
+            print("\n\n", self.types_pay[self.context["pay"]], "\n\n")
+            doc.render(self.context)
+            doc.save('end.docx')
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод write_docx")
 
 
     # форматирует в пдф
     def convert_to_pdf(self) -> None:
-        convert("end.docx", "1.pdf")
-        remove("end.docx")
-        logging.info("Сконвертировано в пдф Ok.")
-
+        try:
+            convert("end.docx", "1.pdf")
+            remove("end.docx")
+            logging.info("Сконвертировано в пдф Ok.")
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод convert_to_pdf")
 
     # склеевает пдфы
     def mrg(self):
-        merger = PdfWriter()
+        try:
+            merger = PdfWriter()
 
-        merger.append("1.pdf")
-        merger.append(self.types_pay[self.context["payment"]])
-
-        res_file_name = f'{self.types_pay[self.context["filename"]]}.pdf'  # имя конечного склееного файла
-        merger.write(res_file_name)
-        merger.close()
-        logging.info("Пдфы склеены Ok.")
+            merger.append("1.pdf")
+            merger.append(self.context["payment"])
+            self.res_file_name = f'{self.context["filename"]}.pdf'  # имя конечного склееного файла
+            merger.write(self.res_file_name)
+            merger.close()
+            logging.info("Пдфы склеены Ok.")
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод mrg")
 
 
     # удаляет промежуточные пдф файлы
     def input_files_delitter(self):
-        remove("1.pdf")
-        remove(self.types_pay[self.context["payment"]])
+        try:
+            remove("1.pdf")
+            #remove(self.types_pay[self.context["payment"]])
+            remove(self.context["payment"])
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод input_files_delitter")
 
 
     def __call__(self, *args, **kwds):
-        self.write_docx()
-        self.convert_to_pdf()
-        self.mrg()
-        self.input_files_delitter()
+        try:
+            self.write_docx()
+            self.convert_to_pdf()
+            self.mrg()
+            self.input_files_delitter()
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс PDFFunctial")
     
 
 
 
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.0.3"
+    ver = "0.1.0"
     
     def __init__(self):
+        #self.pdf_funcs = PDFFunctional()
         self.root = tkinter.Tk()  # инициализация окна
         self.root.title(f"{__class__.name_} | {__class__.ver}")  # заголовок
         self.root.geometry("450x580+650+180")  # размер окна
@@ -91,15 +106,6 @@ class Trebovanie:
         self.files = [file for file in os.listdir() if file.lower().endswith(".pdf")]
         self.combobox = ttk.Combobox(values=self.files)  # инициплизация выпадающего окна со списком файлов
         self.combobox.place(x=10, y=5) #ack(anchor="nw", padx=6, pady=6) 
-
-    
-    def create_treb(self):
-        make_result_pdf_file = PDFFunctional(context=self.get_response_datas())
-        try:
-            make_result_pdf_file()
-            self.refresh_files()
-        except Exception as err:
-            print(f"Ошибка {err}")
 
 
     def choos_org(self):
@@ -252,7 +258,7 @@ class Trebovanie:
     def get_response_datas(self):
         return {
             "payment": self.combobox.get(),  # файл
-            "pay": self.type_treb.get(),  # типа требования
+            "pay": self.type_treb.get(),  # тип требования
             "organization": self.org.get(),  # организация
             "day": self.pay_day.get(),
             "month": self.pay_month.get(),
@@ -265,9 +271,21 @@ class Trebovanie:
             "filename": self.pay_filename.get(),
             "date_res": datetime.strftime(datetime.now(), "%d.%m.%Y")
         }
+    
+
+    def create_treb(self):
+        print(self.get_response_datas())
+        make_result_pdf_file = PDFFunctional(context=self.get_response_datas())
+        try:
+            make_result_pdf_file()
+            self.refresh_files()
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс Trebovanie.")
+            print(f"Ошибка {err}")
 
 
     def __call__(self, *args, **kwds):
+        
         self._all_chooses()
         self._all_frames()
         self._all_buttons()
