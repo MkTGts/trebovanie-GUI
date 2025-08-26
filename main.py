@@ -149,7 +149,7 @@ class PDFFunctional:
 
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.1.2"
+    ver = "0.1.3"
     
     def __init__(self):
         #self.pdf_funcs = PDFFunctional()
