@@ -61,8 +61,8 @@ class PDFFunctional:
     def __init__(self, context: dict):
         self.context = context
         self.types_pay = {
-                    "Предоплата": "startPred.docx",
-                    "По факту": "startFact.docx" 
+                    "Предоплата": "data\startPred.docx",
+                    "По факту": "data\startFact.docx" 
                  }
 
     def write_docx(self) -> None:  
@@ -71,7 +71,7 @@ class PDFFunctional:
             doc = DocxTemplate(self.types_pay[self.context["pay"]])
             print("\n\n", self.types_pay[self.context["pay"]], "\n\n")
             doc.render(self.context)
-            doc.save('end.docx')
+            doc.save('temp\end.docx')
         except Exception as err:
             logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод write_docx")
 
@@ -94,7 +94,7 @@ class PDFFunctional:
             try:
                 # Импортируем и выполняем после перенаправления
                 from docx2pdf import convert
-                convert("end.docx", "1.pdf")
+                convert("temp\end.docx", "temp\\1.pdf")
                 
             finally:
                 # Всегда восстанавливаем потоки
@@ -102,8 +102,8 @@ class PDFFunctional:
                 sys.stderr = original_stderr
             
             # Удаляем файл
-            if os.path.exists("end.docx"):
-                os.remove("end.docx")
+            if os.path.exists("temp\end.docx"):
+                os.remove("temp\end.docx")
     
             logging.info("Сконвертировано в PDF успешно")
         except Exception as err:
@@ -115,9 +115,9 @@ class PDFFunctional:
             from pypdf import PdfWriter
             merger = PdfWriter()
 
-            merger.append("1.pdf")
+            merger.append("temp\\1.pdf")
             merger.append(self.context["payment"])
-            self.res_file_name = f'{self.context["filename"]}.pdf'  # имя конечного склееного файла
+            self.res_file_name = f'res\{self.context["filename"]}.pdf'  # имя конечного склееного файла
             merger.write(self.res_file_name)
             merger.close()
             logging.info("Пдфы склеены Ok.")
@@ -128,7 +128,7 @@ class PDFFunctional:
     # удаляет промежуточные пдф файлы
     def input_files_delitter(self):
         try:
-            remove("1.pdf")
+            remove("temp\\1.pdf")
             #remove(self.types_pay[self.context["payment"]])
             remove(self.context["payment"])
         except Exception as err:
@@ -149,7 +149,7 @@ class PDFFunctional:
 
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.1.1"
+    ver = "0.1.2"
     
     def __init__(self):
         #self.pdf_funcs = PDFFunctional()
@@ -157,13 +157,13 @@ class Trebovanie:
         self.root.title(f"{__class__.name_} | {__class__.ver}")  # заголовок
         self.root.geometry("450x580+650+180")  # размер окна
 
-        self.files = [file for file in os.listdir() if file.lower().endswith(".pdf")]  # список pdf файлов в директории
+        self.files = [file for file in os.listdir("input") if file.lower().endswith(".pdf")]  # список pdf файлов в директории
         self.combobox = ttk.Combobox(values=self.files)  # инициплизация выпадающего окна со списком файлов
         self.combobox.place(x=10, y=5)#pack(anchor="nw", padx=6, pady=6)  # позиционирование
 
 
     def refresh_files(self) -> None:
-        self.files = [file for file in os.listdir() if file.lower().endswith(".pdf")]
+        self.files = [file for file in os.listdir("input") if file.lower().endswith(".pdf")]
         self.combobox = ttk.Combobox(values=self.files)  # инициплизация выпадающего окна со списком файлов
         self.combobox.place(x=10, y=5) #ack(anchor="nw", padx=6, pady=6) 
 
@@ -317,7 +317,7 @@ class Trebovanie:
 
     def get_response_datas(self):
         return {
-            "payment": self.combobox.get(),  # файл
+            "payment": f"input\{self.combobox.get()}",  # файл
             "pay": self.type_treb.get(),  # тип требования
             "organization": self.org.get(),  # организация
             "day": self.pay_day.get(),
@@ -363,6 +363,13 @@ class Trebovanie:
 
 
 def main():
+    temp_dir = ["data", "input", "res", "temp"]
+    dirs = os.listdir()
+
+    for d in ["data", "input", "res", "temp"]:
+        if d not in dirs:
+            os.mkdir(d)
+
     treb = Trebovanie()
     treb()
 
