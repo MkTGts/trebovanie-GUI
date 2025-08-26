@@ -1,3 +1,38 @@
+import sys
+import os
+import logging
+from pathlib import Path
+
+# 1. Установка рабочей директории (САМОЕ ПЕРВОЕ ДЕЙСТВИЕ)
+if getattr(sys, 'frozen', False):
+    # Режим EXE - рабочая директория = где лежит EXE файл
+    os.chdir(os.path.dirname(sys.executable))
+    os.environ['PATH'] = sys._MEIPASS + os.pathsep + os.environ['PATH']    
+else:
+    # Режим разработки - рабочая директория = где лежит скрипт
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+def resource_path(relative_path):
+    """Получение правильного пути к ресурсам"""
+    try:
+        if getattr(sys, 'frozen', False):
+            # Проверяем во временной папке PyInstaller
+            try:
+                base_path = sys._MEIPASS
+                temp_path = os.path.join(base_path, relative_path)
+                if os.path.exists(temp_path):
+                    return temp_path
+            except AttributeError:
+                pass
+        # Если не найдено, используем рабочую директорию
+        return os.path.join(os.getcwd(), relative_path)
+    except Exception as e:
+        logging.error(f"Ошибка в resource_path: {e}")
+        return relative_path
+
+
+
+
 import logging
 import os
 import tkinter
@@ -43,16 +78,51 @@ class PDFFunctional:
 
     # форматирует в пдф
     def convert_to_pdf(self) -> None:
-        try:
+        '''try:
+            from pypdf import PdfWriter
+            from docx2pdf import convert
             convert("end.docx", "1.pdf")
             remove("end.docx")
             logging.info("Сконвертировано в пдф Ok.")
+        except Exception as err:
+            logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод convert_to_pdf")'''
+
+        try:
+            import sys
+            import os
+            from io import StringIO
+            
+            # Сохраняем оригинальные потоки
+            original_stdout = sys.stdout
+            original_stderr = sys.stderr
+            
+            # Устанавливаем временные потоки
+            sys.stdout = StringIO()
+            sys.stderr = StringIO()
+            
+            try:
+                # Импортируем и выполняем после перенаправления
+                from docx2pdf import convert
+                convert("end.docx", "1.pdf")
+                
+            finally:
+                # Всегда восстанавливаем потоки
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
+            
+            # Удаляем файл
+            if os.path.exists("end.docx"):
+                os.remove("end.docx")
+                
+            logging.info("Сконвертировано в PDF успешно")
+                
         except Exception as err:
             logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод convert_to_pdf")
 
     # склеевает пдфы
     def mrg(self):
         try:
+            from pypdf import PdfWriter
             merger = PdfWriter()
 
             merger.append("1.pdf")
@@ -285,11 +355,14 @@ class Trebovanie:
 
 
     def __call__(self, *args, **kwds):
-        
-        self._all_chooses()
-        self._all_frames()
-        self._all_buttons()
-        self.root.mainloop()
+        try:
+            self._all_chooses()
+            self._all_frames()
+            self._all_buttons()
+            self.root.mainloop()
+        except Exception as err:
+            import tkinter.messagebox as msgbox
+            msgbox.showerror("Ошибка", f"Произошла ошибка:\n{err}\n\nПодробности в app.log")
 
 
 

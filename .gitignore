@@ -5,3 +5,7 @@ __pycache__/
 *.db
 *.pdf
 end.docx
+*.exe
+*.spec
+build/
+dist/
