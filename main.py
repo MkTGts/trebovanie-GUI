@@ -78,15 +78,6 @@ class PDFFunctional:
 
     # форматирует в пдф
     def convert_to_pdf(self) -> None:
-        '''try:
-            from pypdf import PdfWriter
-            from docx2pdf import convert
-            convert("end.docx", "1.pdf")
-            remove("end.docx")
-            logging.info("Сконвертировано в пдф Ok.")
-        except Exception as err:
-            logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод convert_to_pdf")'''
-
         try:
             import sys
             import os
@@ -158,7 +149,7 @@ class PDFFunctional:
 
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.1.0"
+    ver = "0.1.1"
     
     def __init__(self):
         #self.pdf_funcs = PDFFunctional()
