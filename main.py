@@ -113,9 +113,8 @@ class PDFFunctional:
             # Удаляем файл
             if os.path.exists("end.docx"):
                 os.remove("end.docx")
-                
+    
             logging.info("Сконвертировано в PDF успешно")
-                
         except Exception as err:
             logger.error(f"Ошибка {err}. Класс PDFFunctial. Метод convert_to_pdf")
 
@@ -349,9 +348,14 @@ class Trebovanie:
         try:
             make_result_pdf_file()
             self.refresh_files()
+
+            import tkinter.messagebox as msgbox
+            msgbox.showinfo("Success", "Требование успешно создано")
         except Exception as err:
             logger.error(f"Ошибка {err}. Класс Trebovanie.")
-            print(f"Ошибка {err}")
+            
+            import tkinter.messagebox as msgbox
+            msgbox.showerror("Error", f"Произошла ошибка:\n{err}\n\nПодробности в app.log")
 
 
     def __call__(self, *args, **kwds):
@@ -360,9 +364,9 @@ class Trebovanie:
             self._all_frames()
             self._all_buttons()
             self.root.mainloop()
+
         except Exception as err:
-            import tkinter.messagebox as msgbox
-            msgbox.showerror("Ошибка", f"Произошла ошибка:\n{err}\n\nПодробности в app.log")
+            logger.error(f"Ошибка при вызове основного метода: {err}")
 
 
 
