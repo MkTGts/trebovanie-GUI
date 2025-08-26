@@ -209,6 +209,22 @@ class Trebovanie:
         self.choos_org()
         self.choos_type_treb()
 
+
+    def _return_text_month(self, data: str) -> str:
+        '''if data.isdigit():
+            if 1 <= int(data) <= 12:
+                import calendar
+                return calendar.month_name[int(data)]'''
+        months = [
+                "января", "февраля", "марта", "апреля", "мая", "июня",
+                "июля", "августа", "сентября", "октября", "ноября", "декабря"
+            ]
+        try:
+            return months[int(data.lstrip("0")) - 1]
+        except Exception as err:
+            print(f"ошибка {err}")
+            return data
+
     
 
     def _frame_pay_day(self):
@@ -321,7 +337,7 @@ class Trebovanie:
             "pay": self.type_treb.get(),  # тип требования
             "organization": self.org.get(),  # организация
             "day": self.pay_day.get(),
-            "month": self.pay_month.get(),
+            "month": self._return_text_month(data=self.pay_month.get()),
             "sum": self.pay_sum.get(),
             "contr_ag": self.pay_addres.get(),
             "info": self.pay_info.get(),
@@ -366,9 +382,10 @@ def main():
     temp_dir = ["data", "input", "res", "temp"]
     dirs = os.listdir()
 
-    for d in ["data", "input", "res", "temp"]:
+    for d in temp_dir:
         if d not in dirs:
             os.mkdir(d)
+
 
     treb = Trebovanie()
     treb()
