@@ -58,12 +58,14 @@ logging.basicConfig(
 
 
 class PDFFunctional:
-    def __init__(self, context: dict):
+    def __init__(self, context: dict, del_input_file=True):
         self.context = context
         self.types_pay = {
                     "Предоплата": "data\startPred.docx",
                     "По факту": "data\startFact.docx" 
                  }
+        self.del_input_file = del_input_file
+
 
     def write_docx(self) -> None:  
         # иницилизация документа ворд
@@ -140,7 +142,8 @@ class PDFFunctional:
             self.write_docx()
             self.convert_to_pdf()
             self.mrg()
-            self.input_files_delitter()
+            if not self.del_input_file:
+                self.input_files_delitter()
         except Exception as err:
             logger.error(f"Ошибка {err}. Класс PDFFunctial")
     
@@ -149,7 +152,7 @@ class PDFFunctional:
 
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.1.3"
+    ver = "0.1.4"
     
     def __init__(self):
         #self.pdf_funcs = PDFFunctional()
@@ -168,7 +171,7 @@ class Trebovanie:
         self.combobox.place(x=10, y=5) #ack(anchor="nw", padx=6, pady=6) 
 
 
-    def choos_org(self):
+    def choose_org(self):
         org_list = {"lic": "ИП Ликинов", "sin": 'ООО ТД "Синтез"', "top": "ООО Топка", "est": "ООО Эстейт", "har_sv": "ИП Харитонов С.В."}  # список организаций
         self.org = tkinter.StringVar(value=org_list["lic"])  # какая организация будет выбираться изначально по умолчанию
 
@@ -191,7 +194,7 @@ class Trebovanie:
         har_sv_btn.place(x=240, y=200)
 
 
-    def choos_type_treb(self):
+    def choose_type_treb(self):
         type_treb_list = {"fact": "По факту", "predop": "Предоплата"}
         self.type_treb = tkinter.StringVar(value=type_treb_list["predop"])
 
@@ -204,10 +207,17 @@ class Trebovanie:
         fact_btn = ttk.Radiobutton(text=type_treb_list["fact"], value=type_treb_list["fact"], variable=self.type_treb)
         fact_btn.place(x=240, y=320)
 
+
+    def choose_del_input_file(self):
+        self.var_res_del_input_file = tkinter.IntVar()
+        self.checkbox_del_input_file = tkinter.Checkbutton(self.root, text="Удалить исходный файл", variable=self.var_res_del_input_file, onvalue=0, offvalue=1)
+        self.checkbox_del_input_file.place(x=20, y=30)
+
     
     def _all_chooses(self):
-        self.choos_org()
-        self.choos_type_treb()
+        self.choose_org()
+        self.choose_type_treb()
+        self.choose_del_input_file()
 
 
     def _return_text_month(self, data: str) -> str:
@@ -233,7 +243,7 @@ class Trebovanie:
         name_label0.pack(anchor="nw")
         self.pay_day = ttk.Entry(self.frame_pay_day)
         self.pay_day.pack(anchor="nw")
-        self.frame_pay_day.place(x=20, y=40)
+        self.frame_pay_day.place(x=20, y=75)
 
     
     def _frame_pay_month(self):
@@ -242,7 +252,7 @@ class Trebovanie:
         name_label1.pack(anchor="nw")
         self.pay_month = ttk.Entry(self.frame_pay_month)
         self.pay_month.pack(anchor="nw")
-        self.frame_pay_month.place(x=20, y=105)
+        self.frame_pay_month.place(x=20, y=140)
 
     
     def _frame_pay_sum(self):
@@ -251,7 +261,7 @@ class Trebovanie:
         name_label2.pack(anchor="nw")
         self.pay_sum = ttk.Entry(self.frame_pay_sum)
         self.pay_sum.pack(anchor="nw")
-        self.frame_pay_sum.place(x=20, y=170)
+        self.frame_pay_sum.place(x=20, y=205)
 
 
     def _frame_pay_addres(self):
@@ -260,7 +270,7 @@ class Trebovanie:
         name_label3.pack(anchor="nw")
         self.pay_addres = ttk.Entry(self.frame_pay_addres)
         self.pay_addres.pack(anchor="nw")
-        self.frame_pay_addres.place(x=20, y=235)
+        self.frame_pay_addres.place(x=20, y=270)
 
 
     def _frame_pay_info(self):
@@ -269,7 +279,7 @@ class Trebovanie:
         name_label4.pack(anchor="nw")
         self.pay_info = ttk.Entry(self.frame_pay_info)
         self.pay_info.pack(anchor="nw")
-        self.frame_pay_info.place(x=20, y=300)
+        self.frame_pay_info.place(x=20, y=335)
 
     
     def _frame_pay_comment(self):
@@ -278,7 +288,7 @@ class Trebovanie:
         name_label5.pack(anchor="nw")
         self.pay_comment = ttk.Entry(self.frame_pay_comment)
         self.pay_comment.pack(anchor="nw")
-        self.frame_pay_comment.place(x=20, y=365)
+        self.frame_pay_comment.place(x=20, y=400)
 
     
     def _frame_pay_chet(self):
@@ -287,7 +297,7 @@ class Trebovanie:
         name_label6.pack(anchor="nw")
         self.pay_chet = ttk.Entry(self.frame_pay_chet)
         self.pay_chet.pack(anchor="nw")
-        self.frame_pay_chet.place(x=20, y=430)
+        self.frame_pay_chet.place(x=20, y=465)
         
     
     def _frame_pay_date(self):
@@ -327,7 +337,7 @@ class Trebovanie:
 
 
     def _all_buttons(self):
-        self.button(text="Создать требование", command=self.create_treb, x=150, y=520)
+        self.button(text="Создать требование", command=self.create_treb, x=150, y=540)
         self.button(text="Обновить список фалов", command=self.refresh_files, x=170, y=5)
 
 
@@ -351,7 +361,8 @@ class Trebovanie:
 
     def create_treb(self):
         print(self.get_response_datas())
-        make_result_pdf_file = PDFFunctional(context=self.get_response_datas())
+        make_result_pdf_file = PDFFunctional(context=self.get_response_datas(), del_input_file=self.var_res_del_input_file.get())
+        print(f"\n\n\n{self.var_res_del_input_file.get()}\n\n\n")
         try:
             make_result_pdf_file()
             self.refresh_files()
