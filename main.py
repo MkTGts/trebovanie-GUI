@@ -152,17 +152,34 @@ class PDFFunctional:
 
 class Trebovanie:
     name_ = "Создание требовнаия"
-    ver = "0.1.4"
+    ver = "0.1.5"
     
     def __init__(self):
-        #self.pdf_funcs = PDFFunctional()
         self.root = tkinter.Tk()  # инициализация окна
         self.root.title(f"{__class__.name_} | {__class__.ver}")  # заголовок
         self.root.geometry("450x580+650+180")  # размер окна
+        self.input_file_path = ""  # инициализация переменной под путь к исходному файлу
+        self.label = tkinter.Label(self.root, text="Файл не выбран")  # название выбранного файла, если он выбран
+        self.label.place(x=120, y=8)  # положение инф о выбранном файле
 
-        self.files = [file for file in os.listdir("input") if file.lower().endswith(".pdf")]  # список pdf файлов в директории
-        self.combobox = ttk.Combobox(values=self.files)  # инициплизация выпадающего окна со списком файлов
-        self.combobox.place(x=10, y=5)#pack(anchor="nw", padx=6, pady=6)  # позиционирование
+
+    def select_file(self):
+        from tkinter import filedialog
+        file_path = filedialog.askopenfilename(
+            title="Выберите файл",
+            filetypes=(("PDF-файлы", "*.pdf"), ("Все файлы", "*.*"))
+        )
+
+        if file_path and file_path.endswith(".pdf"):
+            view_file_path = file_path.split("/")[-1]  
+            if len(view_file_path) >= 35:
+                view_file_path = view_file_path[0:35] + "..."
+
+
+            self.label.config(text=f"Выбранный файл: {view_file_path}")
+            self.input_file_path = file_path  # выбран верный файл
+        else:
+            self.label.config(text="Файл не выбран")
 
 
     def refresh_files(self) -> None:
@@ -266,7 +283,7 @@ class Trebovanie:
 
     def _frame_pay_addres(self):
         self.frame_pay_addres = ttk.Frame(borderwidth=1, relief="solid", padding=[8, 10])
-        name_label3 = ttk.Label(self.frame_pay_addres, text="Кому платим")
+        name_label3 = ttk.Label(self.frame_pay_addres, text="Кому платим                      ")
         name_label3.pack(anchor="nw")
         self.pay_addres = ttk.Entry(self.frame_pay_addres)
         self.pay_addres.pack(anchor="nw")
@@ -332,18 +349,23 @@ class Trebovanie:
 
     
     def button(self, text: str, command: FunctionType, x: int, y: int):
-        self.btn_create_treb = ttk.Button(text=text, command=command)
-        self.btn_create_treb.place(x=x, y=y)
+        self.btn = ttk.Button(text=text, command=command)
+        self.btn.place(x=x, y=y)
 
 
     def _all_buttons(self):
         self.button(text="Создать требование", command=self.create_treb, x=150, y=540)
-        self.button(text="Обновить список фалов", command=self.refresh_files, x=170, y=5)
+        self.button(text="Выбрать файл", command=self.select_file, x=20, y=5)
+
+
+    def _get_manger_name(self):
+        with open("data/manager_name", "r", encoding="utf-8") as file:
+            return file.read()
 
 
     def get_response_datas(self):
         return {
-            "payment": f"input\{self.combobox.get()}",  # файл
+            "payment": self.input_file_path,
             "pay": self.type_treb.get(),  # тип требования
             "organization": self.org.get(),  # организация
             "day": self.pay_day.get(),
@@ -355,25 +377,32 @@ class Trebovanie:
             "num": self.pay_chet.get(),
             "date_num": self.pay_date.get(),
             "filename": self.pay_filename.get(),
-            "date_res": datetime.strftime(datetime.now(), "%d.%m.%Y")
+            "date_res": datetime.strftime(datetime.now(), "%d.%m.%Y"),
+            "manager_name": self._get_manger_name()
         }
     
 
     def create_treb(self):
-        print(self.get_response_datas())
         make_result_pdf_file = PDFFunctional(context=self.get_response_datas(), del_input_file=self.var_res_del_input_file.get())
-        print(f"\n\n\n{self.var_res_del_input_file.get()}\n\n\n")
-        try:
-            make_result_pdf_file()
-            self.refresh_files()
 
+        if self.input_file_path.endswith(".pdf"):
+            try:
+                make_result_pdf_file()
+
+                self.label.config(text="Файл не выбран")
+                self.input_file_path = ""
+
+                import tkinter.messagebox as msgbox
+                msgbox.showinfo("Success", "Требование успешно создано")
+            except Exception as err:
+                logger.error(f"Ошибка {err}. Класс Trebovanie.")
+                
+                import tkinter.messagebox as msgbox
+                msgbox.showerror("Error", f"Произошла ошибка:\n{err}\n\nПодробности в logs.log")
+        else:
             import tkinter.messagebox as msgbox
-            msgbox.showinfo("Success", "Требование успешно создано")
-        except Exception as err:
-            logger.error(f"Ошибка {err}. Класс Trebovanie.")
-            
-            import tkinter.messagebox as msgbox
-            msgbox.showerror("Error", f"Произошла ошибка:\n{err}\n\nПодробности в app.log")
+            msgbox.showinfo("Warning", "Не выбран PDF-файл")
+
 
 
     def __call__(self, *args, **kwds):
